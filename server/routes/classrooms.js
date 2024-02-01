@@ -36,7 +36,32 @@ router.get('/', async (req, res, next) => {
     */
     const where = {};
 
-    // Your code here
+    const { name, studentLimit } = req.query;
+
+    if (name) {
+        where.name = {
+            [Op.like]: `%${name}%`
+        }
+    }
+
+    if (studentLimit.includes(',')) {
+        const checkLimit = studentLimit.split(',');
+        console.log(checkLimit)
+        if (Number(checkLimit[0]) > Number(checkLimit[1]) ||
+            checkLimit.length < 2) {
+                console.log('TEST');
+                errorResult.errors.push({message: "Student Limit should be two numbers: min,max"})
+            } else {
+                where.studentLimit = {
+                    [Op.between]: [Number(checkLimit[0]), Number(checkLimit[1])]
+            }
+        }
+    } else {
+        if (studentLimit.typeOf)
+        where.studentLimit = {
+            [Op.lte]: Number(studentLimit)
+        }
+    }
 
     const classrooms = await Classroom.findAll({
         attributes: [ 'id', 'name', 'studentLimit' ],
@@ -44,7 +69,10 @@ router.get('/', async (req, res, next) => {
         order: [['name']]
         // Phase 1B: Order the Classroom search results
     });
-
+    if (errorResult.errors.length) {
+        console.log(errorResult)
+        res.status(400).json(errorResult);
+    }
     res.json(classrooms);
 });
 
@@ -108,7 +136,10 @@ router.get('/:id', async (req, res, next) => {
     } else {
         classroom.overloaded = false
     }
-
+    if (errorResult.errors.length) {
+        console.log(errorResult)
+        res.status(400).json(errorResult);
+    }
     res.json(classroom);
 });
 
