@@ -75,7 +75,6 @@ router.get('/', async (req, res, next) => {
     // Your code here
 
     let result = {};
-
     // Phase 3A: Include total number of results returned from the query without
         // limits and offsets as a property of count on the result
         // Note: This should be a new query
@@ -89,6 +88,12 @@ router.get('/', async (req, res, next) => {
     });
 
     result.page = page === 0 && size === 0 ? 1 : page;
+
+    const studentCount = await Student.count()
+    const pageCount = Math.ceil(studentCount/size)
+    result.count = studentCount
+    result.pageCount = pageCount
+
     // Phase 2E: Include the page number as a key of page in the response data
         // In the special case (page=0, size=0) that returns all students, set
             // page to 1
@@ -117,6 +122,7 @@ router.get('/', async (req, res, next) => {
         */
     // Your code here
     if (errorResult.errors.length) {
+        errorResult.count = studentCount
         res.status(400).json(errorResult);
     }
     res.json(result);
