@@ -9,7 +9,8 @@ const { Op } = require("sequelize");
 // List
 router.get('/', async (req, res, next) => {
     let errorResult = { errors: [], count: 0, pageCount: 0 };
-    const query = {};
+    const query = {
+    };
     // Phase 2A: Use query params for page & size
     const page = req.query.page === undefined ? 1 : parseInt(req.query.page);
     const size = req.query.size === undefined ? 10 : parseInt(req.query.size);
@@ -52,27 +53,49 @@ router.get('/', async (req, res, next) => {
                 message of 'Lefty should be either true or false' to
                 errorResult.errors
     */
-    const where = {};
-
-    // Your code here
 
 
-    // Phase 2C: Handle invalid params with "Bad Request" response
-    // Phase 3C: Include total student count in the response even if params were
-        // invalid
-        /*
-            If there are elements in the errorResult.errors array, then
-            return a "Bad Request" response with the errorResult as the body
-            of the response.
 
-            Ex:
-                errorResult = {
-                    errors: [{ message: 'Grade should be a number' }],
-                    count: 267,
-                    pageCount: 0
-                }
-        */
-    // Your code here
+
+   // Phase 2C: Handle invalid params with "Bad Request" response
+   // Phase 3C: Include total student count in the response even if params were
+   // invalid
+   /*
+   If there are elements in the errorResult.errors array, then
+   return a "Bad Request" response with the errorResult as the body
+   of the response.
+
+   Ex:
+   errorResult = {
+       errors: [{ message: 'Grade should be a number' }],
+       count: 267,
+       pageCount: 0
+    }
+    */
+   // Your code here
+   const where = {};
+
+   // Your code here
+   const { firstName, lastName, lefty } = req.query
+   if (firstName) {
+       where.firstName = {
+        [Op.like]: `%${firstName}%`
+       }
+   }
+   if (lastName) {
+       where.lastName = {
+        [Op.like]: `%${lastName}%`
+       }
+   }
+
+   console.log(lefty)
+   if (lefty === 'true') {
+    where.leftHanded = true
+   } else if (lefty === 'false') {
+    where.leftHanded = false
+   } else if (lefty) {
+    errorResult.errors.push({ message: "Lefty should be either true or false"});
+   }
 
     let result = {};
     // Phase 3A: Include total number of results returned from the query without
@@ -89,7 +112,7 @@ router.get('/', async (req, res, next) => {
 
     result.page = page === 0 && size === 0 ? 1 : page;
 
-    const studentCount = await Student.count()
+    const studentCount = result.rows.length
     const pageCount = Math.ceil(studentCount/size)
     result.count = studentCount
     result.pageCount = pageCount
