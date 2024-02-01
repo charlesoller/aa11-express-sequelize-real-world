@@ -3,7 +3,7 @@ const express = require('express');
 const router = express.Router();
 
 // Import model(s)
-const { Classroom } = require('../db/models');
+const { Classroom, Supply, StudentClassroom } = require('../db/models');
 const { Op } = require('sequelize');
 
 // List of classrooms
@@ -76,6 +76,38 @@ router.get('/:id', async (req, res, next) => {
             // classroom
         // Optional Phase 5D: Calculate the average grade of the classroom
     // Your code here
+
+    // supplies are many to one to classroom
+    // trying to find amt of supplies in one classroom thru id
+    const { id } = req.params
+    const supplies = await Supply.findAll({
+        where: {
+            classroomId: id
+        },
+        raw: true
+    })
+    const students = await StudentClassroom.findAll({
+        attributes: ['grade'],
+        where: {
+            classroomId: id
+        },
+        raw: true
+    })
+    // const test = await supplies.count()
+    // console.log(test)
+
+    classroom = classroom.toJSON()
+    classroom.supplyCount = supplies.length
+    classroom.studentCount = students.length
+
+    const avgGrade = students.reduce((acc, curr) => acc + curr.grade, 0) / students.length
+    classroom.avgGrade = avgGrade
+
+    if(classroom.studentCount > classroom.studentLimit){
+        classroom.overloaded = true
+    } else {
+        classroom.overloaded = false
+    }
 
     res.json(classroom);
 });
