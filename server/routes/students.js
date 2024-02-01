@@ -9,12 +9,22 @@ const { Op } = require("sequelize");
 // List
 router.get('/', async (req, res, next) => {
     let errorResult = { errors: [], count: 0, pageCount: 0 };
-
+    const query = {};
     // Phase 2A: Use query params for page & size
-    // Your code here
-
+    const page = req.query.page === undefined ? 1 : parseInt(req.query.page);
+    const size = req.query.size === undefined ? 10 : parseInt(req.query.size);
     // Phase 2B: Calculate limit and offset
-    // Phase 2B (optional): Special case to return all students (page=0, size=0)
+    if (page >= 1 && size >= 1) {
+        query.limit = size;
+        query.offset = size * (page - 1);
+        // Phase 2B (optional): Special case to return all students (page=0, size=0)
+    } else if(page === 0 && size === 0){
+        delete query.limit;
+        delete query.offset;
+    } else {
+        errorResult.errors.push({ message: 'Requires valid page and size params' })
+    }
+
     // Phase 2B: Add an error message to errorResult.errors of
         // 'Requires valid page and size params' when page or size is invalid
     // Your code here
@@ -74,9 +84,11 @@ router.get('/', async (req, res, next) => {
         attributes: ['id', 'firstName', 'lastName', 'leftHanded'],
         where,
         order: [['lastName'], ['firstName']],
+        ...query
         // Phase 1A: Order the Students search results
     });
 
+    result.page = page === 0 && size === 0 ? 1 : page;
     // Phase 2E: Include the page number as a key of page in the response data
         // In the special case (page=0, size=0) that returns all students, set
             // page to 1
@@ -104,7 +116,9 @@ router.get('/', async (req, res, next) => {
             }
         */
     // Your code here
-
+    if (errorResult.errors.length) {
+        res.status(400).json(errorResult);
+    }
     res.json(result);
 });
 
